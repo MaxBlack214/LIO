@@ -1,6 +1,6 @@
 # LIO
 
-This is the prototype implementation of **LIO**, a Learned Query Optimization system.
+This is the prototype implementation of **LIO**, a Learned Query Optimization model.
 
 Before using this method, you need to prepare a folder to store your SQL files. Then, run the program with the following command:
 
