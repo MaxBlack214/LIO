@@ -13,8 +13,9 @@ pip install -r requirements.txt
 ```
 Then, prepare a folder to store your SQL files.
 
-- `num_sql` should be set to the total number of SQL files in your folder.
-
+- `num_sql` should be set to the total number of SQL files in your folder.  
+  Here, `200` refers to the number of SQL queries processed per iteration.
+  
 Run the program with the following command:
 
 ```bash
