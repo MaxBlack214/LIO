@@ -17,7 +17,7 @@ from sympy import latex, parse_expr
 
 from evolutionary_forest.utils import gene_to_string, individual_to_tuple,get_feature_importance
 import test_getset
-# 加载 EF 模型所需路径
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "lio_server"))
 from model import Regression
 from test_predict import select_hint,get_plan_json
@@ -35,13 +35,7 @@ Is_empty = False
 
 model_dir = "lio_server/EF_Default_Model"
 
-# def extract_workload_name(paths):
-#     for p in paths:
-#         parts = p.split(os.sep)
-#         for part in parts:
-#             if part in ["job", "JOB_D", "CEB_3K", "job_extended", "queries_for_beginner","queries_for_beginner2","sample_queries","tcpds_queries","dsb_query"]:
-#                 return part
-#     return "default"
+
 
 def extract_relative_sql_path(fp, workload):
     parts = fp.split(os.sep)
@@ -63,21 +57,20 @@ def run_query(sql, hint_set, Is_empty):
     model.load(DEFAULT_MODEL_PATH)
     start1 = time()
     state = 0
-    select_index = -1  # 默认值
-    used_hint = set()  # 默认空 hint
+    select_index = -1  
+    used_hint = set()  
     all_preds, mean_pred, std_pred, hof_size = None, -1, -1, -1
     hintset_pred_variance = -1
-    pred_diff_from_zero = -2 #-2为默认 -1为本身就是预测0
+    pred_diff_from_zero = -2 
     final_preds_per_hint = [-1,-1,-1,-1,-1]
     while time() - start1 < 300:
         conn = None
         try:
             conn = psycopg2.connect(PG_CONNECTION_STR)
             cur = conn.cursor()
-            #print("-----------0---------------")
-            # 设置 PostgreSQL 查询 timeout
+
             cur.execute("SET statement_timeout = '300s';")
-            #print("-----------1---------------")
+
             if not Is_empty:
                 select_index, plan_json,all_preds_i, mean_pred, std_pred, hof_size, hintset_pred_variance,pred_diff_from_zero,final_preds_per_hint = select_hint(hint_set, sql, model, cur)
                 print(f"select_index: {select_index}")
@@ -111,7 +104,7 @@ def run_query(sql, hint_set, Is_empty):
                 except Exception as e_close:
                     print("⚠️ Error closing connection:", e_close)
 
-    # 超过 300 秒总时间后仍失败，记录耗时并返回
+
     total_time = time() - start1
     print(f"⚠️ Query failed or timeout after {total_time:.2f} seconds.")
     return total_time,select_index,used_hint,all_preds, mean_pred, std_pred, hof_size, hintset_pred_variance,pred_diff_from_zero,final_preds_per_hint
@@ -119,7 +112,7 @@ if len(sys.argv) < 5:
     print("Usage: python run_queries.py '<sql_glob>' <param_a> <param_b> <db_name>")
     sys.exit(1)
 
-# 1. 接收参数
+
 sql_glob = sys.argv[1]
 param_a = int(sys.argv[2])
 param_b = int(sys.argv[3])
@@ -129,14 +122,14 @@ PG_CONNECTION_STR = f"dbname={db_name} user=postgres host=localhost password='12
 print(PG_CONNECTION_STR)
 print("a,b:")
 print(param_a,param_b)
-# 2. 展开 *.sql 文件路径
+
 query_paths = glob.glob(sql_glob)
 #query_paths = sys.argv[1:]
-workload_name = os.path.basename(os.path.dirname(query_paths[0]))  # 提取 workload
+workload_name = os.path.basename(os.path.dirname(query_paths[0]))  
 log_config.log_dir = os.path.join("log", workload_name)
 os.makedirs(log_config.log_dir, exist_ok=True)
 
-# query_paths = '/home/lab505/bao_primate/BaoForPostgreSQL/queries_for_beginner'
+
 queries = []
 
 for fp in query_paths:
@@ -150,11 +143,11 @@ query_sequence = random.choices(queries, k=param_b)
 # query_sequence = queries
 bao_chunks = list(chunks(query_sequence, param_a))
 
-#清空检验池
+
 clear_experience_pool()
 
 #hint_set = []
-
+# add your hint_set
 hint_set = [
     {'hashjoin', 'indexscan', 'mergejoin', 'nestloop', 'seqscan', 'indexonlyscan'},  # case 0
     {'hashjoin', 'indexonlyscan', 'indexscan', 'mergejoin', 'seqscan'},  # case 1
@@ -174,7 +167,7 @@ for c_idx, chunk in enumerate(bao_chunks):
         Is_empty = False
     print(Is_empty)
     if c_idx == -1:
-        print(f"c_idx == {c_idx+1}   跳过执行sql")
+        print(f"c_idx == {c_idx+1}   skip")
         
     else:
         print(f"======== Progress: {c_idx+1}/{len(bao_chunks)} ========")
@@ -192,7 +185,7 @@ for c_idx, chunk in enumerate(bao_chunks):
                 writer.writerow([c_idx, q_idx, q_time, time(), extract_relative_sql_path(fp, workload_name),select_index, mean_pred, std_pred, hintset_pred_variance, pred_diff_from_zero,hof_size,final_preds_per_hint[0],final_preds_per_hint[1],final_preds_per_hint[2],used_hint])
             print("get_experience_count:")
             print(get_experience_count())
-        #保存初始化的经验池
+
         if Is_empty:
             src_db_path = os.path.join("lio_server", "lio.db")
             dest_db_path = os.path.join(log_config.log_dir, "lio.db")
@@ -203,10 +196,9 @@ for c_idx, chunk in enumerate(bao_chunks):
     # print("-----------------get  importance------------------")
     # with open(f"{DEFAULT_MODEL_PATH}/EF.pkl", "rb") as f:
     #     model = dill.load(f)
-    # # 加载训练好的模型
-    # #计算重要性，得到新的hint和补集
+
     # feature_importance_dict = get_feature_importance(
-    #     model,  # 你的 EF 模型
+    #     model,  
     #     latex_version=False,
     #     fitness_weighted=False,
     #     mean_fitness=True,
@@ -215,7 +207,7 @@ for c_idx, chunk in enumerate(bao_chunks):
     # cleaned = clean_and_collapse_importance(feature_importance_dict)
     # importance = get_vector_from_importance_dict(cleaned)
     # top_hint, complement_hint = get_top_hint_set_and_complement(importance)
-    #更新hint_set
+
 
     hint_set = [
         {'hashjoin', 'indexscan', 'mergejoin', 'nestloop', 'seqscan', 'indexonlyscan'},  # case 0
@@ -223,18 +215,7 @@ for c_idx, chunk in enumerate(bao_chunks):
         {'hashjoin', 'indexonlyscan', 'seqscan'},  # case 3
         {'hashjoin', 'indexonlyscan', 'indexscan', 'nestloop', 'seqscan'},  # case 4
     ]
-    # hint_set = [
-    #     {'hashjoin', 'indexscan', 'mergejoin', 'nestloop', 'seqscan', 'indexonlyscan'},  # case 0
-    #     {'hashjoin', 'indexonlyscan', 'indexscan', 'mergejoin', 'seqscan'},  # case 1
-    #     {'hashjoin', 'indexonlyscan', 'nestloop', 'seqscan'},  # case 2
-    #     {'hashjoin', 'indexonlyscan', 'seqscan'},  # case 3
-    #     {'hashjoin', 'indexonlyscan', 'indexscan', 'nestloop', 'seqscan'},  # case 4
-    # ]
-    # hint_set = [
-    #     {'hashjoin', 'indexscan', 'mergejoin', 'nestloop', 'seqscan', 'indexonlyscan'},  # case 0
-    #     {'hashjoin', 'indexonlyscan', 'nestloop', 'seqscan'},  # case 2
-    #     {'hashjoin', 'indexonlyscan', 'indexscan', 'nestloop', 'seqscan'},  # case 4
-    # ]
+
 
     # hint_set.extend(top_hint)
     # hint_set.extend(complement_hint)
