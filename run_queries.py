@@ -33,7 +33,7 @@ Is_empty = False
 
 #PG_CONNECTION_STR = "dbname=imdb user=postgres host=localhost password='123456' port='5432'"
 
-model_dir = "bao_server/EF_Default_Model"
+model_dir = "lio_server/EF_Default_Model"
 
 # def extract_workload_name(paths):
 #     for p in paths:
